@@ -83,7 +83,7 @@ int main()
 void CreateMatrix(vector<vector<int>>& mat)
 {
 	random_device rd;
-	uniform_int_distribution<int> dis(0, 1);
+	uniform_int_distribution<int> dis(0, 2);
 
 	int row = mat.size();
 	int col = mat[0].size();
@@ -188,13 +188,51 @@ void Command_R(vector<vector<int>>& mat1, vector<vector<int>>& mat2)
 	// 행렬식의 값
 	int det1 = 0, det2 = 0;
 
-	det1 = ((mat1[0][0] * mat1[1][1] * mat1[2][2]) + (mat1[0][1] * mat1[1][2] * mat1[2][0])
-		+ (mat1[0][2] * mat1[1][0] * mat1[2][1])) - ((mat1[0][0] * mat1[1][2] * mat1[2][1])
-		+ (mat1[0][1] * mat1[1][0] * mat1[2][2]) + (mat1[0][2] * mat1[1][1] * mat1[2][0]));
+	if (mat1.size() == 3)
+	{
+		det1 = ((mat1[0][0] * mat1[1][1] * mat1[2][2]) + (mat1[0][1] * mat1[1][2] * mat1[2][0])
+			+ (mat1[0][2] * mat1[1][0] * mat1[2][1])) - ((mat1[0][0] * mat1[1][2] * mat1[2][1])
+				+ (mat1[0][1] * mat1[1][0] * mat1[2][2]) + (mat1[0][2] * mat1[1][1] * mat1[2][0]));
 
-	det2 = ((mat2[0][0] * mat2[1][1] * mat2[2][2]) + (mat2[0][1] * mat2[1][2] * mat2[2][0])
-		+ (mat2[0][2] * mat2[1][0] * mat2[2][1])) - ((mat2[0][0] * mat2[1][2] * mat2[2][1])
-			+ (mat2[0][1] * mat2[1][0] * mat2[2][2]) + (mat2[0][2] * mat2[1][1] * mat2[2][0]));
+		det2 = ((mat2[0][0] * mat2[1][1] * mat2[2][2]) + (mat2[0][1] * mat2[1][2] * mat2[2][0])
+			+ (mat2[0][2] * mat2[1][0] * mat2[2][1])) - ((mat2[0][0] * mat2[1][2] * mat2[2][1])
+				+ (mat2[0][1] * mat2[1][0] * mat2[2][2]) + (mat2[0][2] * mat2[1][1] * mat2[2][0]));
+	}
+
+	else if (mat1.size() == 4)
+	{
+		det1 = (mat1[0][0] * (((mat1[1][1] * mat1[2][2] * mat1[3][3]) + (mat1[1][2] * mat1[2][3] * mat1[3][1])
+			+ (mat1[1][3] * mat1[2][1] * mat1[3][2])) - ((mat1[1][1] * mat1[2][3] * mat1[3][2])
+				+ (mat1[1][2] * mat1[2][1] * mat1[3][3]) + (mat1[1][3] * mat1[2][2] * mat1[3][1]))))
+
+			+ ((-1 * mat1[0][1]) * (((mat1[1][0] * mat1[1][2] * mat1[1][3]) + (mat1[1][2] * mat1[2][3] * mat1[3][0])
+				+ (mat1[1][3] * mat1[2][0] * mat1[3][2])) - ((mat1[1][0] * mat1[2][3] * mat1[3][2])
+					+ (mat1[1][2] * mat1[2][0] * mat1[3][3]) + (mat1[1][3] * mat1[2][2] * mat1[3][3]))))
+
+			+ (mat1[0][2] * (((mat1[1][0] * mat1[2][1] * mat1[3][3]) + (mat1[1][1] * mat1[2][3] * mat1[3][0])
+				+ (mat1[1][3] * mat1[2][0] * mat1[3][1])) - ((mat1[1][0] * mat1[2][3] * mat1[3][1])
+					+ (mat1[1][1] * mat1[2][0] * mat1[3][3]) + (mat1[1][3] * mat1[2][1] * mat1[3][0]))))
+
+			+ ((-1 * mat1[0][3]) * (((mat1[1][0] * mat1[2][1] * mat1[3][2]) + (mat1[1][1] * mat1[2][2] * mat1[3][0])
+				+ (mat1[1][2] * mat1[2][0] * mat1[3][1])) - ((mat1[1][0] * mat1[2][2] * mat1[3][1])
+					+ (mat1[1][1] * mat1[2][0] * mat1[3][2]) + (mat1[1][2] * mat1[2][1] * mat1[3][0]))));
+
+		det2 = (mat2[0][0] * (((mat2[1][1] * mat2[2][2] * mat2[3][3]) + (mat2[1][2] * mat2[2][3] * mat2[3][1])
+			+ (mat2[1][3] * mat2[2][1] * mat2[3][2])) - ((mat2[1][1] * mat2[2][3] * mat2[3][2])
+				+ (mat2[1][2] * mat2[2][1] * mat2[3][3]) + (mat2[1][3] * mat2[2][2] * mat2[3][1]))))
+
+			+ ((-1 * mat2[0][1]) * (((mat2[1][0] * mat2[1][2] * mat2[1][3]) + (mat2[1][2] * mat2[2][3] * mat2[3][0])
+				+ (mat2[1][3] * mat2[2][0] * mat2[3][2])) - ((mat2[1][0] * mat2[2][3] * mat2[3][2])
+					+ (mat2[1][2] * mat2[2][0] * mat2[3][3]) + (mat2[1][3] * mat2[2][2] * mat2[3][3]))))
+
+			+ (mat2[0][2] * (((mat2[1][0] * mat2[2][1] * mat2[3][3]) + (mat2[1][1] * mat2[2][3] * mat2[3][0])
+				+ (mat2[1][3] * mat2[2][0] * mat2[3][1])) - ((mat2[1][0] * mat2[2][3] * mat2[3][1])
+					+ (mat2[1][1] * mat2[2][0] * mat2[3][3]) + (mat2[1][3] * mat2[2][1] * mat2[3][0]))))
+
+			+ ((-1 * mat2[0][3]) * (((mat2[1][0] * mat2[2][1] * mat2[3][2]) + (mat2[1][1] * mat2[2][2] * mat2[3][0])
+				+ (mat2[1][2] * mat2[2][0] * mat2[3][1])) - ((mat2[1][0] * mat2[2][2] * mat2[3][1])
+					+ (mat2[1][1] * mat2[2][0] * mat2[3][2]) + (mat2[1][2] * mat2[2][1] * mat2[3][0]))));
+	}
 
 	cout << endl;
 	cout << "det(mat1): " << det1 << endl;
@@ -241,6 +279,7 @@ void Command_T(vector<vector<int>>& mat1, vector<vector<int>>& mat2)
 void Commnad_H(vector<vector<int>>& mat1, vector<vector<int>>& mat2, vector<vector<int>>& res)
 {
 	// 3x3 행렬을 4x4 행렬로 변환하고 행려식의 값(4x4 행렬식 값) 출력
+	int det1 = 0, det2 = 0;
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -259,6 +298,19 @@ void Commnad_H(vector<vector<int>>& mat1, vector<vector<int>>& mat2, vector<vect
 	PrintMatrix(mat1);
 	cout << "======== MATRIX 2 ========" << endl;
 	PrintMatrix(mat2);
+
+	det1 = ((mat1[0][0] * mat1[1][1] * mat1[2][2]) + (mat1[0][1] * mat1[1][2] * mat1[2][0])
+		+ (mat1[0][2] * mat1[1][0] * mat1[2][1])) - ((mat1[0][0] * mat1[1][2] * mat1[2][1])
+			+ (mat1[0][1] * mat1[1][0] * mat1[2][2]) + (mat1[0][2] * mat1[1][1] * mat1[2][0]));
+
+	det2 = ((mat2[0][0] * mat2[1][1] * mat2[2][2]) + (mat2[0][1] * mat2[1][2] * mat2[2][0])
+		+ (mat2[0][2] * mat2[1][0] * mat2[2][1])) - ((mat2[0][0] * mat2[1][2] * mat2[2][1])
+			+ (mat2[0][1] * mat2[1][0] * mat2[2][2]) + (mat2[0][2] * mat2[1][1] * mat2[2][0]));
+
+	cout << endl;
+	cout << "det(mat1): " << det1 << endl;
+	cout << "det(mat2): " << det2 << endl;
+	cout << endl;
 }
 
 void Command_S(vector<vector<int>>& mat1, vector<vector<int>>& mat2)
@@ -272,5 +324,4 @@ void Command_S(vector<vector<int>>& mat1, vector<vector<int>>& mat2)
 	cout << "===== Transpose Mat2 =====" << endl;
 	PrintMatrix(mat2);
 	cout << endl;
-
 }
