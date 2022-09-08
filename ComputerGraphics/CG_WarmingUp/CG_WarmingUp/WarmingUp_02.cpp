@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -9,6 +10,7 @@ void CountWords(vector<char>&, vector<char>&);
 void PrintTextFile(vector<char>&);
 void ReverseSentence(vector<char>&);
 void ChangeWords(vector<char>&, char, char);
+void ChangeWordsByInterval(vector<char>&, bool);
 
 int main()
 {
@@ -27,9 +29,7 @@ int main()
 	char c;
 
 	while (in >> noskipws >> c)
-	{
 		textFile.push_back(c);
-	}
 
 	CountWords(textFile, numbers);
 	system("pause");
@@ -37,7 +37,8 @@ int main()
 
 	// 명령어 입력
 	char input;
-	char oldChar, newChar;
+	char oldChar = ' ', newChar = ' ';
+	bool isChanged = false;
 	while (true)
 	{
 		PrintTextFile(textFile);
@@ -56,7 +57,16 @@ int main()
 			ReverseSentence(textFile);
 			break;
 		case 'e': case 'E':	// 동일한 간격으로 특정 문자를 일정 개수 삽입
-
+			if (isChanged)
+			{
+				ChangeWordsByInterval(textFile, false);
+				isChanged = false;
+			}
+			else
+			{
+				ChangeWordsByInterval(textFile, true);
+				isChanged = true;
+			}
 			break;
 		case 'f': case 'F':
 
@@ -81,27 +91,71 @@ int main()
 
 void CountWords(vector<char>& text, vector<char>& numbers)
 {
-	int wordCnt = 0, numCnt = 0;
-	bool isNum = false;
+	int wordCnt = 0, numCnt = 0, capCnt = 0;
+	bool isNum = false, isPush = true;
+	vector<char> temp;
+	vector<char> capital;
 
 	for (auto i = text.begin(); i != text.end(); ++i)
 	{
 		cout << *i;	// 읽은 문자열 출력
 
-		// 숫자 카운트
+		// 숫자 카운트(48 ~ 57)
 		if (*i >= 48 && *i <= 57)
 			isNum = true;
 
 		if (isNum)
 		{
-			if (*i == 10) numbers.push_back(' ');
-			else numbers.push_back(*i);
+			if (*i == 10) temp.push_back(' ');
+			else if ((*i < 48 || *i > 57) && *i != ' ' && *i != 10) isPush = false;
+			else temp.push_back(*i);
 
 			if (i + 1 == text.end())
-				numbers.push_back(' ');
+				temp.push_back(' ');
 
 			if (*i == ' ' || *i == 10)
+			{
+				if (isPush)
+				{
+					for (auto j = temp.begin(); j != temp.end(); ++j)
+					{
+						numbers.push_back(*j);
+					}
+				}
+
 				isNum = false;
+				isPush = true;
+				temp.clear();
+			}
+		}
+
+		// 대문자 카운트 (65 ~ 90)
+		auto start = i;
+		if (*i >= 65 && *i <= 90)
+		{
+			auto j = i;
+			if (i != text.begin())
+			{
+				for (auto j = i; ; --j)
+				{
+					if (*(j - 1) == ' ' || *(j - 1) == 10)
+					{
+						start = j;
+						break;
+					}
+
+				}
+			}
+
+			for (; start != text.end(); ++start)
+			{
+				if (*start == ' ' || *start == 10)
+				{
+					capital.push_back(' ');
+					break;
+				}
+				else capital.push_back(*start);
+			}
 		}
 
 		// 단어 카운트
@@ -111,6 +165,8 @@ void CountWords(vector<char>& text, vector<char>& numbers)
 
 	if (numbers[numbers.size() - 1] == ' ')
 		numbers.erase(numbers.begin() + numbers.size() - 1);
+	if (capital[capital.size() - 1] == ' ')
+		capital.erase(capital.begin() + capital.size() - 1);
 
 	cout << endl << endl;
 	cout << "=============== 숫자 출력 ===============" << endl;
@@ -118,15 +174,23 @@ void CountWords(vector<char>& text, vector<char>& numbers)
 	{
 		cout << *i;
 		if (*i == ' ' || i + 1 == numbers.end())
-		{
 			numCnt++;
-			int s = 0;
-		}
 	}
+
+	cout << endl << endl;
+	cout << "============== 대문자 출력 ==============" << endl;
+	for (auto i = capital.begin(); i != capital.end(); ++i)
+	{
+		cout << *i;
+		if (*i == ' ' || i + 1 == capital.end())
+			capCnt++;
+	}
+
 
 	cout << endl << endl;
 	cout << "word count: " << wordCnt - numCnt << endl;
 	cout << "number count: " << numCnt << endl;
+	cout << "Capital count: " << capCnt << endl;
 	cout << endl;
 }
 
@@ -134,45 +198,78 @@ void PrintTextFile(vector<char>& text)
 {
 	for (auto i = text.begin(); i != text.end(); ++i)
 		cout << *i;
+
 	cout << endl << endl;
 }
 
 void ReverseSentence(vector<char>& text)
 {
-	vector<char> s1, s2;
+	vector<char> t, s1, s2;
 	int idx = 0;
+	int row = 1;
+	int start = 0;
 
-	for (int i = 0; text[i] != 10; ++i)
+	t = text;
+	text.clear();
+
+	for (int i = 0; i < t.size(); ++i)
+		if (t[i] == 10) row++;
+
+	for (int r = 0; r < row; ++r)
 	{
-		s1.push_back(text[i]);
+		for (int i = start; i < t.size(); ++i)
+		{
+			if (i + 1 < t.size() && t[i] != 10 && t[i + 1] == 10)
+			{
+				s1.push_back(t[i]);
+				start = i + 2;
+				break;
+			}
+			else s1.push_back(t[i]);
+		}
+
+		for (auto iter = s1.rbegin(); iter != s1.rend(); ++iter)
+			s2.push_back(*iter);
+
+		for (int i = 0; i < s2.size(); ++i)
+			text.push_back(s2[i]);
+
+		text.push_back(10);
+		s1.clear();
+		s2.clear();
+		idx = 0;
 	}
 
-	for (auto iter = s1.rbegin(); iter != s1.rend(); ++iter)
-	{
-		s2.push_back(*iter);
-		cout << s2[idx++];
-	}
-	
-	for (int i = 0; i < s2.size(); ++i)
-	{
-		text[i] = s2[i];
-	}
-
-	for (auto iter = text.begin(); iter != text.end(); ++iter)
-		cout << *iter;
-
+	//for (auto iter = text.begin(); iter != text.end(); ++iter)
+	//	cout << *iter;
+	PrintTextFile(text);
 	cout << endl;
 }
 
-void ChangeWordsByInterval(vector<char>& text)
+void ChangeWordsByInterval(vector<char>& text, bool isChange)
 {
 	// 3문자 후 2개의 @@ 삽입, 공백도 문자로 취급
-	int cnt = 0;
+	int cnt = 0, idx = 3;
 
-	for (auto iter = text.begin(); iter != text.end(); ++iter)
+	if (isChange)
 	{
-		
+		while (idx < text.size())
+		{
+			text.insert(text.begin() + idx, 2, '@');
+			idx += 5;
+		}
 	}
+	else
+	{
+		text.erase(remove(text.begin(), text.end(), '@'), text.end());
+	}
+
+	PrintTextFile(text);
+}
+
+void ReverseByInterval(vector<char>& text)
+{
+
 }
 
 void ChangeWords(vector<char>& text, char oldChar, char newChar)
