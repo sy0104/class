@@ -6,11 +6,14 @@
 using namespace std;
 
 // 2. 파일에서 데이터 읽기
+// 3. 문자열 다루기 (2번 문제 확장)
 void CountWords(vector<char>&, vector<char>&);
 void PrintTextFile(vector<char>&);
 void ReverseSentence(vector<char>&);
+void ReverseByInterval(vector<char>&);
 void ChangeWords(vector<char>&, char, char);
 void ChangeWordsByInterval(vector<char>&, bool);
+void PrintSameWords(vector<char>&);
 
 int main()
 {
@@ -69,13 +72,13 @@ int main()
 			}
 			break;
 		case 'f': case 'F':
-
+			ReverseByInterval(textFile);
 			break;
 		case 'g': case 'G':	// 문자 내부의 특정 문자를 다른 문자로 바꾸기
 			ChangeWords(textFile, oldChar, newChar);
 			break;
 		case 'h': case 'H':
-
+			PrintSameWords(textFile);
 			break;
 		case 'q': case 'Q':
 			return 0;
@@ -208,6 +211,7 @@ void ReverseSentence(vector<char>& text)
 	int idx = 0;
 	int row = 1;
 	int start = 0;
+	bool isEnd = false;
 
 	t = text;
 	text.clear();
@@ -217,6 +221,7 @@ void ReverseSentence(vector<char>& text)
 
 	for (int r = 0; r < row; ++r)
 	{
+		if (r == row - 1) isEnd = true;
 		for (int i = start; i < t.size(); ++i)
 		{
 			if (i + 1 < t.size() && t[i] != 10 && t[i + 1] == 10)
@@ -234,16 +239,13 @@ void ReverseSentence(vector<char>& text)
 		for (int i = 0; i < s2.size(); ++i)
 			text.push_back(s2[i]);
 
-		text.push_back(10);
+		if (!isEnd) text.push_back(10);
 		s1.clear();
 		s2.clear();
 		idx = 0;
 	}
 
-	//for (auto iter = text.begin(); iter != text.end(); ++iter)
-	//	cout << *iter;
 	PrintTextFile(text);
-	cout << endl;
 }
 
 void ChangeWordsByInterval(vector<char>& text, bool isChange)
@@ -269,7 +271,59 @@ void ChangeWordsByInterval(vector<char>& text, bool isChange)
 
 void ReverseByInterval(vector<char>& text)
 {
+	// 띄어쓰기 기준으로 문자 뒤집기
+	int row = 1;
+	int idx = 0, start = 0, end = 0;
+	bool isPush = false;
+	bool isEnd = false;
+	vector<char> w1, w2;
+	vector<char> temp = text;
+	text.clear();
 
+	for (int i = 0; i < temp.size(); ++i)
+		if (temp[i] == 10) row++;
+
+	int i = start;
+	for (int r = 0; r < row;)
+	{
+		if (i >= temp.size()) break;
+		for (i = start; i < temp.size(); ++i)
+		{
+			if (temp[i] == ' ' || temp[i] == 10 || i + 1 == temp.size())
+			{
+				if (i == temp.size() - 1)
+				{
+					end = i;
+					isEnd = true;
+				}
+				else end = i - 1;
+				//end = i - 1;
+				isPush = true;
+			}
+
+			if (isPush)
+			{
+				for (; end >= start; --end)
+				{
+					text.push_back(temp[end]);
+					int s = 0;
+				}
+
+				if (!isEnd) text.push_back(temp[i]);
+				start = i + 1;
+				isPush = false;
+			}
+
+			// 다음 행으로
+			if (temp[i] == 10)
+			{
+				r++;
+				break;
+			}
+		}
+	}
+
+	PrintTextFile(text);
 }
 
 void ChangeWords(vector<char>& text, char oldChar, char newChar)
@@ -281,4 +335,62 @@ void ChangeWords(vector<char>& text, char oldChar, char newChar)
 	}
 
 	PrintTextFile(text);
+}
+
+void PrintSameWords(vector<char>& text)
+{
+	int row = 1;
+	int idx = 0, end = 0, next = 0;
+	bool isSame = false;
+	bool isEnter = true;
+
+	for (int i = 0; i < text.size(); ++i)
+	{
+		if (isEnter)
+		{
+			cout << row << "번째 줄: ";
+			isEnter = false;
+			row++;
+		}
+
+		if (text[i] == 10)
+		{
+			end = i - 1;
+			isEnter = true;
+		}
+		else if (i == text.size() - 1)
+		{
+			end = i;
+			int s = 0;
+		}
+		next = end;
+
+		for (; idx != end;)
+		{
+			if (text[idx] == text[end])
+			{
+				cout << text[idx];
+				idx++; end--;
+				isSame = true;
+			}
+			else
+			{
+				idx = next + 2;
+				break;
+			}
+		}
+
+		if (text[i] == 10)
+		{
+			if (!isSame)
+			{
+				cout << endl;
+				isSame = false;
+			}
+			else
+				cout << endl;
+		}
+	}
+
+	cout << endl;
 }

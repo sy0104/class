@@ -3,7 +3,7 @@
 
 using namespace std;
 
-// 3. 도형 간의 충돌 체크
+// 4. 사각형과 사각형 간의 충돌 체크
 
 typedef struct Rect
 {
@@ -14,10 +14,11 @@ typedef struct Rect
 }RECT;
 
 enum DIR { LEFT, RIGHT, UP, DOWN };
+enum TURN { TURN_RECT1, TURN_RECT2 };
 
 void InitializeRect(RECT&);
 void PrintRect(RECT&, RECT&);
-void MoveRect(RECT&, RECT&, DIR);
+void MoveRect(RECT&, RECT&, DIR, TURN);
 bool IntersectRect(RECT&, RECT&);
 
 int main()
@@ -25,6 +26,8 @@ int main()
 	// 2개 사각형 생성, 좌표값 설정
 	RECT rect1, rect2;
 	char input;
+	int curTurn = 0;
+	TURN turn = TURN::TURN_RECT1;
 
 	InitializeRect(rect1);
 	InitializeRect(rect2);
@@ -38,16 +41,20 @@ int main()
 		switch (input)
 		{
 		case 'w': case 'W':
-			MoveRect(rect1, rect2, DIR::UP);
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::UP, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::UP, TURN::TURN_RECT2);
 			break;
 		case 'a': case 'A':
-			MoveRect(rect1, rect2, DIR::LEFT);
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::LEFT, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::LEFT, TURN::TURN_RECT2);
 			break;
 		case 's': case 'S':
-			MoveRect(rect1, rect2, DIR::DOWN);
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::DOWN, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::DOWN, TURN::TURN_RECT2);
 			break;
 		case 'd': case 'D':
-			MoveRect(rect1, rect2, DIR::RIGHT);
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::RIGHT, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::RIGHT, TURN::TURN_RECT2);
 			break;
 		case 'r': case 'R':
 			system("cls");
@@ -58,19 +65,21 @@ int main()
 		default:
 			continue;
 		}
+		curTurn++;
 	}
 }
 
 void InitializeRect(RECT& rect)
 {
 	random_device rd;
-	uniform_int_distribution<int> dis1(0, 450);
+	uniform_int_distribution<int> disX(0, 750);
+	uniform_int_distribution<int> disY(0, 550);
 
-	rect.left = dis1(rd);
-	rect.top = dis1(rd);
+	rect.left = disX(rd);
+	rect.top = disY(rd);
 
-	uniform_int_distribution<int> rightDis(rect.left + 50, 500);
-	uniform_int_distribution<int> bottomDis(rect.top + 50, 500);
+	uniform_int_distribution<int> rightDis(rect.left + 50, 800);
+	uniform_int_distribution<int> bottomDis(rect.top + 50, 600);
 
 	rect.right = rightDis(rd);
 	rect.bottom = bottomDis(rd);
@@ -87,43 +96,46 @@ void PrintRect(RECT& r1, RECT& r2)
 	cout << endl;
 }
 
-void MoveRect(RECT& r1, RECT& r2, DIR dir)
+void MoveRect(RECT& moveRect, RECT& otherRect, DIR dir, TURN turn)
 {
 	// 범위 0 ~ 500
-	int dis = 40;
+	int dis = 50;
 	bool isError = false;
+
+	if (turn == TURN_RECT1) cout << "RECT1 Move" << endl;
+	else cout << "RECT2 Move" << endl;
 
 	switch (dir)
 	{
 	case DIR::LEFT:
-		if (r2.left - dis >= 0)
+		if (moveRect.left - dis >= 0)
 		{
-			r2.left -= dis;
-			r2.right -= dis;
+			moveRect.left -= dis;
+			moveRect.right -= dis;
 		}
 		else isError = true;
 		break;
 	case DIR::RIGHT:
-		if (r2.right + dis <= 500)
+		if (moveRect.right + dis <= 800)
 		{
-			r2.left += dis;
-			r2.right += dis;
+			moveRect.left += dis;
+			moveRect.right += dis;
 		}
 		else isError = true;
 		break;
 	case DIR::UP:
-		if (r2.top - dis >= 0)
+		if (moveRect.top - dis >= 0)
 		{
-			r2.top -= dis;
-			r2.bottom -= dis;
+			moveRect.top -= dis;
+			moveRect.bottom -= dis;
 		}
 		else isError = true;
 		break;
 	case DIR::DOWN:
-		if (r2.bottom + dis <= 500)
+		if (moveRect.bottom + dis <= 600)
 		{
-			r2.top += dis;
-			r2.bottom += dis;
+			moveRect.top += dis;
+			moveRect.bottom += dis;
 		}
 		else isError = true;
 		break;
@@ -131,8 +143,10 @@ void MoveRect(RECT& r1, RECT& r2, DIR dir)
 
 	if (isError) cout << endl << "!!!! ERROR !!!!" << endl;
 
-	PrintRect(r1, r2);
-	if (IntersectRect(r1, r2))
+	if (turn == TURN_RECT1) PrintRect(moveRect, otherRect);
+	else if (turn == TURN_RECT2) PrintRect(otherRect, moveRect);
+
+	if (IntersectRect(moveRect, otherRect))
 	{
 		cout << "Rectangle 1 & Rectangle 2 collide !!" << endl;
 	}

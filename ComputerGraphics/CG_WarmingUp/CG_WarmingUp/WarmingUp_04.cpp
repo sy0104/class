@@ -83,15 +83,17 @@ int main()
 
 void PrintList(vector<POINT>& points)
 {
-	cout << "====== LIST ======" << endl;
+	cout << "========== LIST ==========" << endl;
+	int idx = 9;
 
 	for (auto iter = points.rbegin(); iter != points.rend(); ++iter)
 	{
+		cout << idx-- << " | ";
 		if ((*iter).x != EMPTY)
-			cout << (*iter).x << '\t' << (*iter).y << '\t' << (*iter).z << endl;
+			cout << '\t' << (*iter).x << '\t' << (*iter).y << '\t' << (*iter).z << endl;
 		else cout << endl;
 	}
-	cout << "=================" << endl;
+	cout << "=========================" << endl;
 }
 
 void AddFront(vector<POINT>& points, POINT p)
