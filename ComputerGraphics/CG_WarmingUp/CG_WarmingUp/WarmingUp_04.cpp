@@ -1,296 +1,164 @@
 #include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
+#include <random>
+
 using namespace std;
 
-#define MAXSIZE 10
-#define EMPTY	999
+// 4. 사각형과 사각형 간의 충돌 체크
 
-// 4. 저장 리스트 만들기 (구조체 데이터 사용)
-
-typedef struct Point
+typedef struct Rect
 {
-	int x;
-	int y;
-	int z;
-}POINT;
+	int left;
+	int top;
+	int right;
+	int bottom;
+}RECT;
 
-void PrintList(vector<POINT>&);
-void AddFront(vector<POINT>&, POINT);
-void DeleteFront(vector<POINT>&);
-void AddBack(vector<POINT>&, POINT);
-void DeleteBack(vector<POINT>&);
-void PrintListLength(vector<POINT>&);
-void ClearList(vector<POINT>&);
-void FarthestPoint(vector<POINT>&);
-void NearestPoint(vector<POINT>&);
-void SortByDistance(vector<POINT>&);
+enum DIR { LEFT, RIGHT, UP, DOWN };
+enum TURN { TURN_RECT1, TURN_RECT2 };
+
+void InitializeRect(RECT&);
+void PrintRect(RECT&, RECT&);
+void MoveRect(RECT&, RECT&, DIR, TURN);
+bool IntersectRect(RECT&, RECT&);
 
 int main()
 {
-	vector<POINT> points(10, { EMPTY, EMPTY, EMPTY });
-	char command;
-	int x, y, z;
+	// 2개 사각형 생성, 좌표값 설정
+	RECT rect1, rect2;
+	char input;
+	int curTurn = 0;
+	TURN turn = TURN::TURN_RECT1;
+
+	InitializeRect(rect1);
+	InitializeRect(rect2);
+	PrintRect(rect1, rect2);
 
 	while (true)
 	{
 		cout << "Command: ";
-		cin >> command;
-		if (command == '+' || command == 'e' || command == 'E')
-			cin >> x >> y >> z;
+		cin >> input;
 
-		switch (command)
+		switch (input)
 		{
-		case '+':	// 리스트 맨 위에 입력
-			AddFront(points, { x, y, z });
+		case 'w': case 'W':
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::UP, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::UP, TURN::TURN_RECT2);
 			break;
-		case '-':	// 리스트 맨 위에서 삭제
-			DeleteFront(points);
+		case 'a': case 'A':
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::LEFT, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::LEFT, TURN::TURN_RECT2);
 			break;
-		case 'e': case 'E':	// 리스트 맨 아래에 입력
-			AddBack(points, { x, y, z });
+		case 's': case 'S':
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::DOWN, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::DOWN, TURN::TURN_RECT2);
 			break;
-		case 'd': case 'D':	// 리스트 맨 아래에서 삭제
-			DeleteBack(points); 
+		case 'd': case 'D':
+			if (curTurn % 2 == 0) MoveRect(rect1, rect2, DIR::RIGHT, TURN::TURN_RECT1);
+			else MoveRect(rect2, rect1, DIR::RIGHT, TURN::TURN_RECT2);
 			break;
-		case 'l': case 'L':	// 리스트의 길이 출력
-			PrintListLength(points);
-			break;
-		case 'c': case 'C':	// 리스트 비움
-			ClearList(points);
-			break;
-		case 'm': case 'M':	// 원점에서 가장 먼 거리에 있는 점의 좌표값 출력
-			FarthestPoint(points);
-			break;
-		case 'n': case 'N':	// 원점에서 가장 가까운 거리에 있는 점의 좌표값 출력
-			NearestPoint(points);
-			break;
-		case 's': case 'S':	// 원점과의 거리를 정렬하여 오름차순하여 출력, 인덱스 0번부터 빈칸없이 저장
-			SortByDistance(points);
-			break;
-		case 'q': case 'Q':	// 프로그램 종료
-			return 0;
+		case 'r': case 'R':
+			system("cls");
+			InitializeRect(rect1);
+			InitializeRect(rect2);
+			PrintRect(rect1, rect2);
 			break;
 		default:
 			continue;
 		}
-
-		system("pause");
-		system("cls");
+		curTurn++;
 	}
 }
 
-void PrintList(vector<POINT>& points)
+void InitializeRect(RECT& rect)
 {
-	cout << "========== LIST ==========" << endl;
-	int idx = 9;
+	random_device rd;
+	uniform_int_distribution<int> disX(0, 750);
+	uniform_int_distribution<int> disY(0, 550);
 
-	for (auto iter = points.rbegin(); iter != points.rend(); ++iter)
-	{
-		cout << idx-- << " | ";
-		if ((*iter).x != EMPTY)
-			cout << '\t' << (*iter).x << '\t' << (*iter).y << '\t' << (*iter).z << endl;
-		else cout << endl;
-	}
-	cout << "=========================" << endl;
+	rect.left = disX(rd);
+	rect.top = disY(rd);
+
+	uniform_int_distribution<int> rightDis(rect.left + 50, 800);
+	uniform_int_distribution<int> bottomDis(rect.top + 50, 600);
+
+	rect.right = rightDis(rd);
+	rect.bottom = bottomDis(rd);
 }
 
-void AddFront(vector<POINT>& points, POINT p)
+void PrintRect(RECT& r1, RECT& r2)
 {
-	bool isFull = true;
+	cout << endl;
+	cout << "Shape 1: (" << r1.left << ", " << r1.top << ") ("
+		<< r1.right << ", " << r1.bottom << ")" << endl;
 
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
+	cout << "Shape 2: (" << r2.left << ", " << r2.top << ") ("
+		<< r2.right << ", " << r2.bottom << ")" << endl;
+	cout << endl;
+}
+
+void MoveRect(RECT& moveRect, RECT& otherRect, DIR dir, TURN turn)
+{
+	// 범위 0 ~ 500
+	int dis = 50;
+	bool isError = false;
+
+	if (turn == TURN_RECT1) cout << "RECT1 Move" << endl;
+	else cout << "RECT2 Move" << endl;
+
+	switch (dir)
 	{
-		if ((*iter).x == EMPTY)
+	case DIR::LEFT:
+		if (moveRect.left - dis >= 0)
 		{
-			(*iter).x = p.x;
-			(*iter).y = p.y;
-			(*iter).z = p.z;
-			isFull = false;
-			break;
+			moveRect.left -= dis;
+			moveRect.right -= dis;
 		}
-	}
-
-	PrintList(points);
-	if (isFull) cout << "빈 자리가 없습니다." << endl;
-}
-
-void DeleteFront(vector<POINT>& points)
-{
-	bool isEmpty = true;
-
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		if ((*iter).x != EMPTY)
+		else isError = true;
+		break;
+	case DIR::RIGHT:
+		if (moveRect.right + dis <= 800)
 		{
-			(*iter).x = EMPTY;
-			(*iter).y = EMPTY;
-			(*iter).z = EMPTY;
-			isEmpty = false;
-			break;
+			moveRect.left += dis;
+			moveRect.right += dis;
 		}
-	}
-
-	if (isEmpty) cout << "리스트가 비어있습니다." << endl;
-	PrintList(points);
-}
-
-void AddBack(vector<POINT>& points, POINT p)
-{
-	bool isFull = true;
-	for (auto iter = points.rbegin(); iter != points.rend(); ++iter)
-	{
-		if ((*iter).x == EMPTY)
+		else isError = true;
+		break;
+	case DIR::UP:
+		if (moveRect.top - dis >= 0)
 		{
-			(*iter).x = p.x;
-			(*iter).y = p.y;
-			(*iter).z = p.z;
-			isFull = false;
-			break;
+			moveRect.top -= dis;
+			moveRect.bottom -= dis;
 		}
-	}
-
-	if (isFull) cout << "빈 자리가 없습니다." << endl;
-	PrintList(points);
-}
-
-void DeleteBack(vector<POINT>& points)
-{
-	bool isEmpty = true;
-
-	for (auto iter = points.rbegin(); iter != points.rend(); ++iter)
-	{
-		if ((*iter).x != EMPTY)
+		else isError = true;
+		break;
+	case DIR::DOWN:
+		if (moveRect.bottom + dis <= 600)
 		{
-			(*iter).x = EMPTY;
-			(*iter).y = EMPTY;
-			(*iter).z = EMPTY;
-			isEmpty = false;
-			break;
+			moveRect.top += dis;
+			moveRect.bottom += dis;
 		}
+		else isError = true;
+		break;
 	}
 
-	if (isEmpty) cout << "리스트가 비어있습니다." << endl;
-	PrintList(points);
-}
+	if (isError) cout << endl << "!!!! ERROR !!!!" << endl;
 
-void PrintListLength(vector<POINT>& points)
-{
-	int cnt = 0;
+	if (turn == TURN_RECT1) PrintRect(moveRect, otherRect);
+	else if (turn == TURN_RECT2) PrintRect(otherRect, moveRect);
 
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
+	if (IntersectRect(moveRect, otherRect))
 	{
-		if ((*iter).x != EMPTY) cnt++;
-	}
-
-	cout << "리스트 길이: " << cnt << endl;
-	PrintList(points);
-}
-
-void ClearList(vector<POINT>& points)
-{
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		(*iter).x = EMPTY;
-		(*iter).y = EMPTY;
-		(*iter).z = EMPTY;
-	}
-
-	PrintList(points);
-}
-
-void FarthestPoint(vector<POINT>& points)
-{
-	float dis = 0.f;
-	vector<POINT> p;
-
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		if ((*iter).x != EMPTY)
-		{
-			float d = sqrt(pow((*iter).x, 2) + pow((*iter).y, 2) + pow((*iter).z, 2));
-			int a = 0;
-			if (dis <= d)
-			{
-				dis = d;
-			}
-		}
-	}
-
-	cout << "원점에서 가장 먼 점 (거리: " << dis << ")" << endl;
-
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		float d = sqrt(pow((*iter).x, 2) + pow((*iter).y, 2) + pow((*iter).z, 2));
-		if (d == dis)
-			cout << (*iter).x << '\t' << (*iter).y << '\t' << (*iter).z << endl;
+		cout << "Rectangle 1 & Rectangle 2 collide !!" << endl;
 	}
 }
 
-void NearestPoint(vector<POINT>& points)
+bool IntersectRect(RECT& r1, RECT& r2)
 {
-	float dis = 9999.f;
+	if (r1.left <= r2.right && 
+		r1.right >= r2.left &&
+		r1.top <= r2.bottom && 
+		r1.bottom >= r2.top) 
+		return true;
 
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		if ((*iter).x != EMPTY)
-		{
-			float d = sqrt(pow((*iter).x, 2) + pow((*iter).y, 2) + pow((*iter).z, 2));
-			int a = 0;
-			if (dis >= d)
-			{
-				dis = d;
-			}
-		}
-	}
-
-	cout << "원점에서 가장 가까운 점 (거리: " << dis << ")" << endl;
-
-	for (auto iter = points.begin(); iter != points.end(); ++iter)
-	{
-		float d = sqrt(pow((*iter).x, 2) + pow((*iter).y, 2) + pow((*iter).z, 2));
-		if (d == dis)
-			cout << (*iter).x << '\t' << (*iter).y << '\t' << (*iter).z << endl;
-	}
-
-}
-
-void SortByDistance(vector<POINT>& points)
-{
-	// 정렬
-	for (int i = 0; i < points.size() - 1; ++i)
-	{
-		for (int j = i + 1; j < points.size(); ++j)
-		{
-			float d1 = sqrt(pow(points[i].x, 2) + pow(points[i].y, 2) + pow(points[i].z, 2));
-			float d2 = sqrt(pow(points[j].x, 2) + pow(points[j].y, 2) + pow(points[j].z, 2));
-			if (points[i].x != EMPTY && points[j].x != EMPTY && d1 > d2)
-			{
-				POINT temp = points[j];
-				points[j] = points[i];
-				points[i] = temp;
-			}
-		}
-	}
-
-	// 빈칸 없이
-	for (int i = 0; i < points.size(); ++i)
-	{
-		if (points[i].x == EMPTY)
-		{
-			for (int j = i + 1; j < points.size(); ++j)
-			{
-				if (points[j].x != EMPTY)
-				{
-					POINT temp = points[i];
-					points[i] = points[j];
-					points[j] = temp;
-					break;
-				}
-			}
-		}
-	}
-	
-	PrintList(points);
+	return false;
 }
