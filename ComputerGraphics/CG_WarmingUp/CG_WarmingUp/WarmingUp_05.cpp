@@ -19,9 +19,10 @@ typedef struct Point
 void PrintList(vector<POINT>&);
 void AddFront(vector<POINT>&, POINT);
 void DeleteFront(vector<POINT>&);
-void AddBack(vector<POINT>&, POINT);
+void AddBottom(vector<POINT>&, POINT);
 void DeleteBack(vector<POINT>&);
 void PrintListLength(vector<POINT>&);
+int GetListLength(vector<POINT>&);
 void ClearList(vector<POINT>&);
 void FarthestPoint(vector<POINT>&);
 void NearestPoint(vector<POINT>&);
@@ -35,6 +36,7 @@ int main()
 
 	while (true)
 	{
+		PrintList(points);
 		cout << "Command: ";
 		cin >> command;
 		if (command == '+' || command == 'e' || command == 'E')
@@ -46,13 +48,13 @@ int main()
 			AddFront(points, { x, y, z });
 			break;
 		case '-':	// 리스트 맨 위에서 삭제
-			DeleteFront(points);
+			DeleteBack(points);
 			break;
 		case 'e': case 'E':	// 리스트 맨 아래에 입력
-			AddBack(points, { x, y, z });
+			AddBottom(points, { x, y, z });
 			break;
 		case 'd': case 'D':	// 리스트 맨 아래에서 삭제
-			DeleteBack(points); 
+			DeleteFront(points);
 			break;
 		case 'l': case 'L':	// 리스트의 길이 출력
 			PrintListLength(points);
@@ -136,22 +138,38 @@ void DeleteFront(vector<POINT>& points)
 	PrintList(points);
 }
 
-void AddBack(vector<POINT>& points, POINT p)
+void AddBottom(vector<POINT>& points, POINT p)
 {
-	bool isFull = true;
-	for (auto iter = points.rbegin(); iter != points.rend(); ++iter)
+	// 빈자리 체크
+	if (GetListLength(points) >= 10)
 	{
-		if ((*iter).x == EMPTY)
+		cout << "빈 자리가 없습니다." << endl;
+		return;
+	}
+
+	int idx = 0;
+	vector<POINT> temp(10, { EMPTY, EMPTY, EMPTY });
+	temp[0] = p;
+
+	for (int i = 0; i < points.size(); ++i)
+	{
+		if (points[i].x != EMPTY)
 		{
-			(*iter).x = p.x;
-			(*iter).y = p.y;
-			(*iter).z = p.z;
-			isFull = false;
+			idx = i;
 			break;
 		}
 	}
 
-	if (isFull) cout << "빈 자리가 없습니다." << endl;
+	for (int i = 1; points[idx].x != EMPTY; ++i)
+	{
+		temp[i].x = points[idx].x;
+		temp[i].y = points[idx].y;
+		temp[i].z = points[idx].z;
+		idx++;
+	}
+
+	points = temp;
+
 	PrintList(points);
 }
 
@@ -186,6 +204,18 @@ void PrintListLength(vector<POINT>& points)
 
 	cout << "리스트 길이: " << cnt << endl;
 	PrintList(points);
+}
+
+int GetListLength(vector<POINT>& points)
+{
+	int cnt = 0;
+
+	for (auto iter = points.begin(); iter != points.end(); ++iter)
+	{
+		if ((*iter).x != EMPTY) cnt++;
+	}
+
+	return cnt;
 }
 
 void ClearList(vector<POINT>& points)

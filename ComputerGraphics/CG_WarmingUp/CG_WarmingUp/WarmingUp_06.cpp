@@ -71,7 +71,8 @@ void PrintBoard(vector<vector<int>>& board)
 		{
 			if (board[i][j] == 0) TextColor(7, 0);
 			else TextColor(12, 0);
-			cout << left << setw(4) << board[i][j];
+			cout.setf(ios::left);
+			cout << setw(5) << board[i][j] << setw(5);
 
 		}
 		cout << endl;

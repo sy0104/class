@@ -27,6 +27,9 @@ typedef struct Point
 }POS;
 
 // 7. 카드 짝 맞추기 게임 만들기
+// 실행 횟수: 5
+// 1번 맞추면 +1
+
 void PrintBoard(vector<vector<char>>&);
 void PrintSelectedCard(vector<vector<char>>&, char, int);
 void InitializeAlphabet(vector<vector<char>>&);
@@ -50,6 +53,7 @@ int main()
 
 	while (true)
 	{
+		cout << "====== TURN " << turn + 1 << " / 5 ======" << endl << endl;
 		PrintBoard(board);
 		cout << "< TEST용 출력 >" << endl;
 		PrintBoard(alphabet);
@@ -58,6 +62,8 @@ int main()
 		cin >> input1 >> num1;
 		PrintSelectedCard(board, input1, num1);
 
+		cout << "< TEST용 출력 >" << endl;
+		PrintBoard(alphabet);
 		cout << "input card 2: ";
 		cin >> input2 >> num2;
 		PrintSelectedCard(board, input2, num2);

@@ -252,13 +252,29 @@ void ChangeWordsByInterval(vector<char>& text, bool isChange)
 {
 	// 3문자 후 2개의 @@ 삽입, 공백도 문자로 취급
 	int cnt = 0, idx = 3;
+	bool isEnter = false;
 
 	if (isChange)
 	{
 		while (idx < text.size())
 		{
 			text.insert(text.begin() + idx, 2, '@');
-			idx += 5;
+
+			for (int i = idx; i <= idx + 5; ++i)
+			{
+				if (i >= text.size())
+					break;
+
+				if (text[i] == 10)
+				{
+					idx += 6;
+					isEnter = true;
+					break;
+				}
+			}
+
+			if (!isEnter) idx += 5;
+			isEnter = false;
 		}
 	}
 	else
