@@ -29,6 +29,7 @@ typedef struct Point
 // 7. 카드 짝 맞추기 게임 만들기
 // 실행 횟수: 5
 // 1번 맞추면 +1
+// 5턴 후 다시시작 가능
 
 void PrintBoard(vector<vector<char>>&);
 void PrintSelectedCard(vector<vector<char>>&, char, int);

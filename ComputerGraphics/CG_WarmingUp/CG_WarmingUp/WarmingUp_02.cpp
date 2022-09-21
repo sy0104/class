@@ -75,6 +75,7 @@ int main()
 			ReverseByInterval(textFile);
 			break;
 		case 'g': case 'G':	// 문자 내부의 특정 문자를 다른 문자로 바꾸기
+			// G누르고 엔터, 바꿀 문자 두개 입력하시면 됩니다.
 			ChangeWords(textFile, oldChar, newChar);
 			break;
 		case 'h': case 'H':

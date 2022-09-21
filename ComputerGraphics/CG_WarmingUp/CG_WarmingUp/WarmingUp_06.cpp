@@ -10,6 +10,8 @@ using namespace std;
 enum DIR { RIGHT, DOWN, LEFT, UP };
 
 // 6. 경로 만들기
+// 경로 이동: A(좌측으로 한칸 이동) / D(우측으로 한칸 이동)
+// 10*10으로 구현했습니다.
 void PrintBoard(vector<vector<int>>&);
 void CreateRoute(vector<vector<int>>&);
 bool SetRouteToBoard(vector<vector<int>>&, DIR, int&, int, int);
@@ -57,7 +59,6 @@ int main()
 		system("pause");
 		system("cls");
 	}
-
 }
 
 void PrintBoard(vector<vector<int>>& board)
