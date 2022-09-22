@@ -109,10 +109,13 @@ void Mouse(int button, int state, int x, int y)
 		// 사각형 크기 축소
 		else
 		{
-			rect.x1 += sizeX;
-			rect.y1 += sizeY;
-			rect.x2 -= sizeX;
-			rect.y2 -= sizeY;
+			if (rect.x2 > 0.2f)
+			{
+				rect.x1 += sizeX;
+				rect.y1 += sizeY;
+				rect.x2 -= sizeX;
+				rect.y2 -= sizeY;
+			}
 		}
 	}
 
@@ -122,8 +125,6 @@ void Mouse(int button, int state, int x, int y)
 bool isCollision(RECTANGLE r, int x, int y)
 {
 	// 마우스 좌표가 사각형 안에 있는지 확인하는 함수
-	// x1	   y2	 x2	   y2
-	// -0.4f, -0.4f, 0.4f, 0.4f
 	float mouseX = ((float)x) / (WINDOWX / 2) - 1.0;
 	float mouseY = -(((float)y) / (WINDOWY / 2) - 1.0);
 
