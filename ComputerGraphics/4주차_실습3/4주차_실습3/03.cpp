@@ -29,7 +29,9 @@ bool isCollision(RECTANGLE, int, int);
 
 vector<RECTANGLE> rectVec;
 
-bool isLeftDown = false;
+GLboolean isLeftDown = false;
+GLboolean isMove = false;
+auto moveRect = rectVec.rbegin();
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정 
 {
@@ -51,9 +53,6 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	// 첫번째 사각형 생성
 	RECTANGLE r = { 0.0f, 0.0f, 0.15f, 1.0f, 0.0f, 0.0f };
-	rectVec.push_back(r);
-
-	r = { 0.05f, 0.05f, 0.15f, 1.0f, 1.0f, 0.0f };
 	rectVec.push_back(r);
 
 	glutDisplayFunc(drawScene); // 출력 함수의 지정
@@ -83,6 +82,17 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 		glRectf(x1, y1, x2, y2);
 	}
 
+	if (isMove)
+	{
+		GLfloat x1 = (*moveRect).x - (*moveRect).size;
+		GLfloat y1 = (*moveRect).y - (*moveRect).size;
+		GLfloat x2 = (*moveRect).x + (*moveRect).size;
+		GLfloat y2 = (*moveRect).y + (*moveRect).size;
+
+		glColor3f((*moveRect).r, (*moveRect).g, (*moveRect).b);
+		glRectf(x1, y1, x2, y2);
+	}
+
 	glutSwapBuffers(); // 화면에 출력하기
 }
 
@@ -93,8 +103,12 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 
 void Mouse(int button, int state, int x, int y)
 {
-	if (button == GLUT_LEFT_BUTTON) isLeftDown = true;
-	else if (button == GLUT_UP) isLeftDown = false;
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) isLeftDown = true;
+	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
+	{
+		isLeftDown = false;
+		isMove = false;
+	}
 }
 
 void Motion(int x, int y)
@@ -102,11 +116,29 @@ void Motion(int x, int y)
 	float mouseX = ((float)x) / (WINDOWX / 2) - 1.0;
 	float mouseY = -(((float)y) / (WINDOWY / 2) - 1.0);
 
-
 	if (isLeftDown)
 	{
-		rectVec[0].x = mouseX;
-		rectVec[0].y = mouseY;
+		// 마우스가 사각형을 아직 클릭하지 않았으면 충돌체크해서 해당 사각형 선택
+		if (!isMove)
+		{
+			// 사각형이 겹쳐있으면 나중에 만든 사각형이 선택됨
+			for (auto iter = rectVec.rbegin(); iter != rectVec.rend(); ++iter)
+			{
+				if (isCollision(*iter, x, y))
+				{
+					isMove = true;
+					moveRect = iter;
+					break;
+				}
+			}
+		}
+
+		// 마우스 좌표에 따라 사각형 움직임
+		else
+		{
+			(*moveRect).x = mouseX;
+			(*moveRect).y = mouseY;
+		}
 	}
 }
 
@@ -117,7 +149,13 @@ void Keyboard(unsigned char key, int x, int y)
 	case 'a': case 'A':
 		if (rectVec.size() < 5)
 		{
-
+			random_device rd;
+			uniform_int_distribution<int> uid(0, 255);
+			GLclampf r = uid(rd) / 255.0f;
+			GLclampf g = uid(rd) / 255.0f;
+			GLclampf b = uid(rd) / 255.0f;
+			RECTANGLE rect = { 0.0f, 0.0f, 0.15f, r, g, b };
+			rectVec.push_back(rect);
 		}
 		break;
 	}
@@ -140,10 +178,7 @@ bool isCollision(RECTANGLE r, int x, int y)
 	GLfloat y2 = r.y + r.size;
 
 	if (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2)
-	{
-		int a = 0;
 		return true;
-	}
 
 	return false;
 }
