@@ -23,10 +23,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="point.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="triangle.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

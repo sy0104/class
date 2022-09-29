@@ -109,7 +109,26 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
-	return GLvoid();
+	if (key == 's' || key == 'S') {
+		rectVec.clear();
+
+		for (int i = 0; i < 100; ++i)
+		{
+			random_device rd;
+			uniform_real_distribution<float> urd(-1.0f + 0.03f, 1.0f - 0.03f);
+			uniform_int_distribution<int> uid(0, 255);
+
+			RECTANGLE rect;
+			rect.x = urd(rd);
+			rect.y = urd(rd);
+
+			rect.r = (GLclampf)(uid(rd) / 255.0f);
+			rect.g = (GLclampf)(uid(rd) / 255.0f);
+			rect.b = (GLclampf)(uid(rd) / 255.0f);
+
+			rectVec.push_back(rect);
+		}
+	}
 }
 
 void Mouse(int button, int state, int x, int y)
