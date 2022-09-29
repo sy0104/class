@@ -27,13 +27,19 @@ GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLchar* vertexSource;	// 소스코드 저장 변수
 GLchar* fragmentSource;	// 소스코드 저장 변수
 
-GLuint VAO, VBO;
-GLuint s_program;	
+GLuint VAO, VBO[2];
+GLuint s_program;
+
+const GLfloat triShape[3][3] = { //--- 삼각형 위치 값
+{ -0.5, -0.5, 0.0 }, { 0.5, -0.5, 0.0 }, { 0.0, 0.5, 0.0} };
+const GLfloat colors[3][3] = { //--- 삼각형 꼭지점 색상
+{ 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 } };
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	width = 500;
-	height = 500;
+	width = 800;
+	height = 600;
+
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
@@ -45,10 +51,8 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glewExperimental = GL_TRUE;
 	glewInit();
 
-	//--- 세이더 읽어와서 세이더 프로그램 만들기
-	make_vertexShaders(); //--- 버텍스 세이더 만들기
-	make_fragmentShaders(); //--- 프래그먼트 세이더 만들기
-	shaderID = make_shaderProgram(); //--- 세이더 프로그램 만들기
+	InitShader();
+	InitBuffer();
 
 	glutDisplayFunc(DrawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -157,14 +161,23 @@ GLuint make_shaderProgram()
 //--- 출력 콜백 함수
 GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
+	GLfloat rColor, gColor, bColor;
+
+	// 변경된 배경색 설정
+	//glClearColor(rColor, gColor, bColor, 1.0f);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(shaderID);
+	// 렌더링 파이프라인에서 셰이더 불러오기
+	glUseProgram(s_program);
 
-	// 삼각형 그리기: 0번 인덱스부터 3개의 버텍스를 사용하여 삼각형 그리기
+	// 사용할 VAO 불러오기
+	glBindVertexArray(VAO);
+
+	// 삼각형 그리기
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
+	// 화면에 출력하기
 	glutSwapBuffers();
 }
 
@@ -176,22 +189,12 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 
 void InitBuffer()
 {
-	const GLfloat triShape[3][3] = { // 삼각형 꼭지점 좌표값
-	{-0.5, -0.5, 0.0},
-	{ 0.5, -0.5, 0.0 },
-	{ 0.0, 0.5, 0.0} };
-
-	const GLfloat colors[3][3] = { // 삼각형 꼭지점 색상
-	{1.0, 0.0, 0.0},
-	{0.0, 1.0, 0.0},
-	{0.0, 0.0, 1.0} };
-
 	glGenVertexArrays(1, &VAO);	// VAO를 저장하고 할당하기
 	glBindVertexArray(VAO);		// VAO를 바인드하기
-	glGenBuffers(2, &VBO);		// 2개의 VBO를 지정하고 할당하기
+	glGenBuffers(2, VBO);		// 2개의 VBO를 지정하고 할당하기
 
 	// 1번째 VBO를 활성화하여 바인드하고, 버텍스 속성(좌표값)을 저장
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
 
 	// 변수 diamond에서 버텍스 데이터 값을 버퍼에 복사한다.
 	// triShape 배열의 사이즈: 9 * float
@@ -205,7 +208,7 @@ void InitBuffer()
 
 
 	// 2번째 VBO를 활성화 하여 바인드 하고, 버텍스 속성(색상)을 저장
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
 
 	// 변수 colors에서 버텍스 색상을 복사한다.
 	// colors 배열의 사이즈: 9 * float
@@ -227,5 +230,15 @@ void InitShader()
 	s_program = glCreateProgram();
 
 	glAttachShader(s_program, vertexShader);
+	glAttachShader(s_program, fragmentShader);
+	glLinkProgram(s_program);
 
+	//checkCompileErrors(s_program, "PROGRAM");
+
+	// 셰이더 삭제하기
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// shader program 사용하기
+	glUseProgram(s_program);
 }
