@@ -18,6 +18,11 @@ GLvoid DrawScene();
 GLvoid Reshape(int w, int h);
 void InitBuffer();
 void InitShader();
+void UpdateBuffer();
+
+GLvoid Keyboard(unsigned char, int, int);
+void Mouse(int, int, int, int);
+void TimerFunction(int);
 
 GLint width, height;
 GLuint shaderID; //--- 세이더 프로그램 이름
@@ -30,18 +35,20 @@ GLchar* fragmentSource;	// 소스코드 저장 변수
 GLuint VAO, VBO[2];
 GLuint s_program;
 
-const GLfloat triShape[12][3] = { //--- 삼각형 위치 값
-	{ -0.75, 0.25, 0.0 }, { -0.25, 0.25, 0.0 }, { -0.5, 0.75, 0.0},
-	{ 0.25, 0.25, 0.0 }, { 0.75, 0.25, 0.0 }, { 0.5, 0.75, 0.0 },
-	{ -0.75, -0.75, 0.0 }, { -0.25, -0.75, 0.0 }, { -0.5, -0.25, 0.0 }, 
-	{ 0.25, -0.75, 0.0 }, { 0.75, -0.75, 0.0 }, { 0.5, -0.25, 0.0 }
+int idx = 0;
+
+GLfloat triShape[12][3] = { //--- 삼각형 위치 값
+	{ -0.75, 0.25, 0.0 }, { -0.25, 0.25, 0.0 }, { -0.5, 0.85, 0.0 },
+	{ 0.25, 0.25, 0.0 }, { 0.75, 0.25, 0.0 }, { 0.5, 0.85, 0.0 },
+	{ -0.75, -0.75, 0.0 }, { -0.25, -0.75, 0.0 }, { -0.5, -0.15, 0.0 }, 
+	{ 0.25, -0.75, 0.0 }, { 0.75, -0.75, 0.0 }, { 0.5, -0.15, 0.0 }
 };
 
-const GLfloat colors[12][3] = { //--- 삼각형 꼭지점 색상
-	{ 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 },
-	{ 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 },
-	{ 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 },
-	{ 1.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 0.0, 1.0 }
+GLfloat colors[12][3] = { //--- 삼각형 꼭지점 색상
+	{ 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 },	// red
+	{ 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 },	// green
+	{ 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 },	// blue
+	{ 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 }		// yellow
 };
 
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
@@ -60,15 +67,14 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glewExperimental = GL_TRUE;
 	glewInit();
 
-	//triShape.push_back({ -0.5, -0.5, 0.0 });
-	//triShape.push_back({ 0.5, -0.5, 0.0 });
-	//triShape.push_back({ 0.0, 0.5, 0.0 });
-
 	InitShader();
 	InitBuffer();
 
 	glutDisplayFunc(DrawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
+	glutKeyboardFunc(Keyboard);	// 키보드 입력 콜백함수 지정
+	glutMouseFunc(Mouse);	// 마우스 함수 지정
+	glutTimerFunc(10, TimerFunction, 1);	// 타이머 함수 설정
 	glutMainLoop();
 }
 
@@ -142,9 +148,10 @@ void make_fragmentShaders()
 	}
 }
 
+GLuint ShaderProgramID;
+
 GLuint make_shaderProgram()
 {
-	GLuint ShaderProgramID;
 	ShaderProgramID = glCreateProgram(); //--- 세이더 프로그램 만들기
 
 	glAttachShader(ShaderProgramID, vertexShader); //--- 세이더 프로그램에 버텍스 세이더 붙이기
@@ -233,6 +240,36 @@ void InitBuffer()
 	glEnableVertexAttribArray(1);
 }
 
+void UpdateBuffer()
+{
+	// 1번째 VBO를 활성화하여 바인드하고, 버텍스 속성(좌표값)을 저장
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+
+	// 변수 diamond에서 버텍스 데이터 값을 버퍼에 복사한다.
+	// triShape 배열의 사이즈: 9 * float !!!!
+	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(GLfloat), triShape, GL_STATIC_DRAW);
+
+	// 좌표값을 attribute 인덱스 0번에 명시한다: 버텍스 당 3 * float
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// attribute 인덱스 0번을 사용가능하게 함
+	glEnableVertexAttribArray(0);
+
+	// 2번째 VBO를 활성화 하여 바인드 하고, 버텍스 속성(색상)을 저장
+	glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+
+	// 변수 colors에서 버텍스 색상을 복사한다.
+	// colors 배열의 사이즈: 9 * float
+	glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(GLfloat), colors, GL_STATIC_DRAW);
+
+	// 색상값을 attribute 인덱스 1번에 명시한다: 버텍스 당 3 * float
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+	// attribute 인덱스 1번을 사용 가능하게 함.
+	glEnableVertexAttribArray(1);
+
+}
+
 void InitShader()
 {
 	make_vertexShaders();
@@ -253,4 +290,55 @@ void InitShader()
 
 	// shader program 사용하기
 	glUseProgram(s_program);
+}
+
+GLvoid Keyboard(unsigned char key, int x, int y)
+{
+
+}
+
+void Mouse(int button, int state, int x, int y)
+{
+	float mouseX = ((float)x) / (width / 2) - 1.0;
+	float mouseY = -(((float)y) / (height / 2) - 1.0);
+	GLfloat r, g, b;
+
+	random_device rd;
+	uniform_int_distribution<int> uid(0, 255);
+	r = (GLfloat)(uid(rd) / 255.0f);
+	g = (GLfloat)(uid(rd) / 255.0f);
+	b = (GLfloat)(uid(rd) / 255.0f);
+
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+		// 좌표
+		triShape[idx][0] = mouseX - 0.25;
+		triShape[idx][1] = mouseY - 0.25;
+		colors[idx][0] = r;
+		colors[idx][1] = g;
+		colors[idx++][2] = b;
+
+		triShape[idx][0] = mouseX + 0.25;
+		triShape[idx][1] = mouseY - 0.25;
+		colors[idx][0] = r;
+		colors[idx][1] = g;
+		colors[idx++][2] = b;
+
+		triShape[idx][0] = mouseX;
+		triShape[idx][1] = mouseY + 0.35;
+		colors[idx][0] = r;
+		colors[idx][1] = g;
+		colors[idx++][2] = b;
+
+		//idx++;
+		int a = 0;
+		if (idx > 11) idx = 0;
+
+		UpdateBuffer();
+	}
+}
+
+void TimerFunction(int value)
+{
+	glutPostRedisplay();
+	glutTimerFunc(10, TimerFunction, 1);
 }
