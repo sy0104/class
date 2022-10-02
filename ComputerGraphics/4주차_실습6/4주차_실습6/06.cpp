@@ -35,6 +35,10 @@ GLchar* fragmentSource;	// 소스코드 저장 변수
 GLuint VAO, VBO[2];
 GLuint s_program;
 
+GLboolean isFill = true;
+GLboolean isExtend = true;
+GLfloat triWidth = 0.05, triHeight = 0.05;
+GLfloat triMaxSize = 0.25, triMinSize = -0.1;
 int idx = 0;
 
 GLfloat triShape[12][3] = { //--- 삼각형 위치 값
@@ -148,10 +152,9 @@ void make_fragmentShaders()
 	}
 }
 
-GLuint ShaderProgramID;
-
 GLuint make_shaderProgram()
 {
+	GLuint ShaderProgramID;
 	ShaderProgramID = glCreateProgram(); //--- 세이더 프로그램 만들기
 
 	glAttachShader(ShaderProgramID, vertexShader); //--- 세이더 프로그램에 버텍스 세이더 붙이기
@@ -196,6 +199,10 @@ GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
 
 	// 삼각형 그리기
 	glDrawArrays(GL_TRIANGLES, 0, 12);	// 렌더링 할 인덱스 개수(6)
+
+	// a: 도형을 면으로 그림, b: 도형을 선으로 그림
+	if (isFill) glPolygonMode(GL_FRONT, GL_FILL);
+	else glPolygonMode(GL_FRONT, GL_LINE);
 
 	// 화면에 출력하기
 	glutSwapBuffers();
@@ -294,7 +301,8 @@ void InitShader()
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
-
+	if (key == 'a' || key == 'A') isFill = true;
+	else if (key == 'b' || key == 'B') isFill = false;
 }
 
 void Mouse(int button, int state, int x, int y)
@@ -310,27 +318,42 @@ void Mouse(int button, int state, int x, int y)
 	b = (GLfloat)(uid(rd) / 255.0f);
 
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		// 좌표
-		triShape[idx][0] = mouseX - 0.25;
-		triShape[idx][1] = mouseY - 0.25;
+		triShape[idx][0] = mouseX - 0.25 - triWidth;
+		triShape[idx][1] = mouseY - 0.25 - triHeight;
 		colors[idx][0] = r;
 		colors[idx][1] = g;
 		colors[idx++][2] = b;
 
-		triShape[idx][0] = mouseX + 0.25;
-		triShape[idx][1] = mouseY - 0.25;
+		triShape[idx][0] = mouseX + 0.25 + triWidth;
+		triShape[idx][1] = mouseY - 0.25 - triHeight;
 		colors[idx][0] = r;
 		colors[idx][1] = g;
 		colors[idx++][2] = b;
 
 		triShape[idx][0] = mouseX;
-		triShape[idx][1] = mouseY + 0.35;
+		triShape[idx][1] = mouseY + 0.35 + triHeight;
 		colors[idx][0] = r;
 		colors[idx][1] = g;
 		colors[idx++][2] = b;
 
-		//idx++;
-		int a = 0;
+		if (isExtend) {
+			triWidth += 0.05;
+			triHeight += 0.05;
+		}
+		else {
+			triWidth -= 0.05;
+			triHeight -= 0.05;
+		}
+
+		if (triWidth >= triMaxSize) {
+			//triWidth = triHeight = -triMaxSize;
+			isExtend = false;
+		}
+		else if (triWidth <= triMinSize) {
+			//triWidth = triHeight = -triMinSize;
+			isExtend = true;
+		}
+
 		if (idx > 11) idx = 0;
 
 		UpdateBuffer();
