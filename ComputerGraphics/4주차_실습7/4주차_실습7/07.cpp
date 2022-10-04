@@ -10,6 +10,9 @@
 #include <vector>
 using namespace std;
 
+enum DIR { LEFTUP, LEFTDOWN, RIGHTUP, RIGHTDOWN };
+enum SHAPE { SHAPE1, SHAPE2, SHAPE3, SHAPE4 };
+
 char* filetobuf(const char* file);
 void make_vertexShaders();
 void make_fragmentShaders();
@@ -24,7 +27,15 @@ GLvoid Keyboard(unsigned char, int, int);
 void Mouse(int, int, int, int);
 void TimerFunction(int);
 
-GLint width, height;
+void InitDirSpeed();
+void Move();
+void CheckCollision();
+void Rotate(int, DIR, SHAPE);
+
+DIR dir[4] = { LEFTUP, };
+GLfloat speed[4] = { 0.0, };
+
+GLuint width, height;
 GLuint shaderID; //--- 세이더 프로그램 이름
 GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
@@ -32,21 +43,14 @@ GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLchar* vertexSource;	// 소스코드 저장 변수
 GLchar* fragmentSource;	// 소스코드 저장 변수
 
-//GLuint VAO, VBO[2];
 GLuint VBO[2];
 GLuint s_program;
 
-GLboolean isFill = true;
-GLboolean isExtend = true;
-GLfloat triWidth = 0.05, triHeight = 0.05;
-GLfloat triMaxSize = 0.25, triMinSize = -0.1;
-int idx = 0;
-
 GLfloat triShape[12][3] = { //--- 삼각형 위치 값
-	{ -0.75, 0.25, 0.0 }, { -0.25, 0.25, 0.0 }, { -0.5, 0.85, 0.0 },
-	{ 0.25, 0.25, 0.0 }, { 0.75, 0.25, 0.0 }, { 0.5, 0.85, 0.0 },
-	{ -0.75, -0.75, 0.0 }, { -0.25, -0.75, 0.0 }, { -0.5, -0.15, 0.0 }, 
-	{ 0.25, -0.75, 0.0 }, { 0.75, -0.75, 0.0 }, { 0.5, -0.15, 0.0 }
+	{ -0.6, 0.3, 0.0 }, { -0.4, 0.3, 0.0 }, { -0.5, 0.7, 0.0 },
+	{ 0.4, 0.3, 0.0 }, { 0.6, 0.3, 0.0 }, { 0.5, 0.7, 0.0 },
+	{ -0.6, -0.7, 0.0 }, { -0.4, -0.7, 0.0 }, { -0.5, -0.3, 0.0 },
+	{ 0.4, -0.7, 0.0 }, { 0.6, -0.7, 0.0 }, { 0.5, -0.3, 0.0 }
 };
 
 GLfloat colors[12][3] = { //--- 삼각형 꼭지점 색상
@@ -74,6 +78,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	InitShader();
 	InitBuffer();
+	InitDirSpeed();
 
 	glutDisplayFunc(DrawScene); //--- 출력 콜백 함수
 	glutReshapeFunc(Reshape);
@@ -185,10 +190,7 @@ GLuint make_shaderProgram()
 //--- 출력 콜백 함수
 GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
-	GLfloat rColor, gColor, bColor;
-
 	// 변경된 배경색 설정
-	//glClearColor(rColor, gColor, bColor, 1.0f);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -196,11 +198,7 @@ GLvoid DrawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glUseProgram(s_program);
 
 	// 삼각형 그리기
-	glDrawArrays(GL_TRIANGLES, 0, 12);	// 렌더링 할 인덱스 개수(6)
-
-	// a: 도형을 면으로 그림, b: 도형을 선으로 그림
-	if (isFill) glPolygonMode(GL_FRONT, GL_FILL);
-	else glPolygonMode(GL_FRONT, GL_LINE);
+	glDrawArrays(GL_TRIANGLES, 0, 12);	// 렌더링 할 인덱스 개수(12)
 
 	// 화면에 출력하기
 	glutSwapBuffers();
@@ -270,7 +268,6 @@ void UpdateBuffer()
 
 	// attribute 인덱스 1번을 사용 가능하게 함.
 	glEnableVertexAttribArray(1);
-
 }
 
 void InitShader()
@@ -297,65 +294,171 @@ void InitShader()
 
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
-	if (key == 'a' || key == 'A') isFill = true;
-	else if (key == 'b' || key == 'B') isFill = false;
 }
 
 void Mouse(int button, int state, int x, int y)
 {
 	float mouseX = ((float)x) / (width / 2) - 1.0;
 	float mouseY = -(((float)y) / (height / 2) - 1.0);
-	GLfloat r, g, b;
-
-	random_device rd;
-	uniform_int_distribution<int> uid(0, 255);
-	r = (GLfloat)(uid(rd) / 255.0f);
-	g = (GLfloat)(uid(rd) / 255.0f);
-	b = (GLfloat)(uid(rd) / 255.0f);
-
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		triShape[idx][0] = mouseX - 0.25 - triWidth;
-		triShape[idx][1] = mouseY - 0.25 - triHeight;
-		colors[idx][0] = r;
-		colors[idx][1] = g;
-		colors[idx++][2] = b;
-
-		triShape[idx][0] = mouseX + 0.25 + triWidth;
-		triShape[idx][1] = mouseY - 0.25 - triHeight;
-		colors[idx][0] = r;
-		colors[idx][1] = g;
-		colors[idx++][2] = b;
-
-		triShape[idx][0] = mouseX;
-		triShape[idx][1] = mouseY + 0.35 + triHeight;
-		colors[idx][0] = r;
-		colors[idx][1] = g;
-		colors[idx++][2] = b;
-
-		if (isExtend) {
-			triWidth += 0.05;
-			triHeight += 0.05;
-		}
-		else {
-			triWidth -= 0.05;
-			triHeight -= 0.05;
-		}
-
-		if (triWidth >= triMaxSize) {
-			isExtend = false;
-		}
-		else if (triWidth <= triMinSize) {
-			isExtend = true;
-		}
-
-		if (idx > 11) idx = 0;
-
-		UpdateBuffer();
-	}
 }
 
 void TimerFunction(int value)
 {
+	CheckCollision();
+	Move();
+
+	UpdateBuffer();
+
 	glutPostRedisplay();
 	glutTimerFunc(10, TimerFunction, 1);
+}
+
+void InitDirSpeed()
+{
+	random_device rd;
+	uniform_int_distribution<int> uid(0, 3);
+	uniform_real_distribution<float> urd(0.007, 0.01);
+
+	for (int i = 0; i < 4; ++i) {
+		dir[i] = (DIR)(uid(rd));
+		speed[i] = urd(rd);
+		//dir[i] = DIR::LEFTUP;
+		//speed[i] = 0.005;
+	}
+}
+
+void Move()
+{
+	int idx = 0;
+
+	for (int i = 0; i < 4; ++i) {
+		idx = i * 3;
+		switch (dir[i])
+		{
+		case DIR::LEFTDOWN:
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] -= speed[i];
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] -= speed[i];
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] -= speed[i];
+			break;
+		case DIR::LEFTUP:
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] += speed[i];
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] += speed[i];
+			triShape[idx][0] -= speed[i];
+			triShape[idx++][1] += speed[i];
+			break;
+		case RIGHTDOWN:
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] -= speed[i];
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] -= speed[i];
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] -= speed[i];
+			break;
+		case RIGHTUP:
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] += speed[i];
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] += speed[i];
+			triShape[idx][0] += speed[i];
+			triShape[idx++][1] += speed[i];
+			break;
+		}
+	}
+}
+
+void CheckCollision()
+{
+	int idx = 0;
+
+	for (int i = 0; i < 4; ++i) {
+		idx = i * 3;
+
+		if (dir[i] == LEFTDOWN) {
+			if (triShape[idx][0] <= -1.0) Rotate(idx, dir[i], SHAPE2);
+			else if (triShape[idx][1] <= -1.0 || triShape[idx + 1][1] <= -1.0) Rotate(idx, dir[i], SHAPE4);
+		}
+		else if (dir[i] == LEFTUP) {
+			if (triShape[idx][0] <= -1.0) Rotate(idx, dir[i], SHAPE2);
+			else if (triShape[idx + 2][1] >= 1.0) Rotate(idx, dir[i], SHAPE1);
+		}
+		else if (dir[i] == RIGHTDOWN) {
+			if (triShape[idx + 1][0] >= 1.0 || triShape[idx + 2][0] >= 1.0) Rotate(idx, dir[i], SHAPE3);
+			else if (triShape[idx][1] <= -1.0 || triShape[idx + 1][1] <= -1.0) Rotate(idx, dir[i], SHAPE4);
+		}
+		else if (dir[i] == RIGHTUP) {
+			if (triShape[idx + 1][0] >= 1.0 || triShape[idx + 2][0] >= 1.0) Rotate(idx, dir[i], SHAPE3);
+			else if (triShape[idx + 2][1] >= 1.0) Rotate(idx, dir[i], SHAPE1);
+		}
+	}
+}
+
+void Rotate(int idx, DIR d, SHAPE changeShape)
+{
+	int index = idx / 3;
+	int originIdx = idx;
+
+	// 기준점
+	GLfloat x, y;
+
+	switch (changeShape)
+	{
+	case SHAPE::SHAPE1:
+		x = triShape[idx][0];
+		y = 1.0;
+
+		triShape[idx++][1] = y;
+		triShape[idx][0] = x + 0.1;
+		triShape[idx++][1] = y - 0.4;
+		triShape[idx][0] = x + 0.2;
+		triShape[idx][1] = y;
+		break;
+	case SHAPE::SHAPE2:
+		x = -1.0;
+		y = triShape[idx][1];
+
+		triShape[idx++][0] = x;
+		triShape[idx][0] = x + 0.4;
+		triShape[idx++][1] = y + 0.1;
+		triShape[idx][0] = x;
+		triShape[idx][1] = y + 0.2;
+		break;
+	case SHAPE::SHAPE3:
+		x = 1.0;
+		y = triShape[idx][1];
+
+		triShape[idx++][0] = x - 0.4;
+		triShape[idx][0] = x;
+		triShape[idx++][1] = y - 0.1;
+		triShape[idx][0] = x;
+		triShape[idx][1] = y + 0.1;
+		break;
+	case SHAPE::SHAPE4:
+		x = triShape[idx][0];
+		y = -1.0;
+
+		triShape[idx++][1] = y;
+		triShape[idx][0] = x + 0.2;
+		triShape[idx++][1] = y;
+		triShape[idx][0] = x + 0.1;
+		triShape[idx][1] = y + 0.4;
+		break;
+	}
+
+
+	// 반대 방향 전환
+	random_device rd;
+	uniform_int_distribution<int> leftUid(0, 1);
+	uniform_int_distribution<int> rightUid(2, 3);
+	uniform_int_distribution<int> uid(0, 3);
+
+	//if (d == LEFTDOWN || d == LEFTUP) dir[originIdx / 3] = (DIR)(rightUid(rd));
+	//else dir[originIdx / 3] = (DIR)(leftUid(rd));
+
+	while (dir[originIdx / 3] != (DIR)(uid(rd)))
+		dir[originIdx / 3] = (DIR)(uid(rd));
 }
