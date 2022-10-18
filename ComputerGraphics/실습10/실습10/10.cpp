@@ -239,7 +239,7 @@ void InitBuffer()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
 
 	// 변수 diamond에서 버텍스 데이터 값을 버퍼에 복사한다.
-	// triShape 배열의 사이즈: 9 * float !!!!
+	// triShape 배열의 사이즈: 9 * float
 	glBufferData(GL_ARRAY_BUFFER, 90 * sizeof(GLfloat), triShape, GL_STATIC_DRAW);
 
 	// 좌표값을 attribute 인덱스 0번에 명시한다: 버텍스 당 3 * float
